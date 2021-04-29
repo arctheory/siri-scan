@@ -30,9 +30,16 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+
+    aaptOptions {
+        noCompress "tflite"
+    }
 }
 
 dependencies {
+    // tenser flow lite custom image labeling
+    implementation 'com.google.mlkit:image-labeling-custom:16.3.1'
+
     // CameraX core library using the camera2 implementation
     def camerax_version = "1.0.0-rc05"
     // The following line is optional, as the core library is included indirectly by camera-camera2

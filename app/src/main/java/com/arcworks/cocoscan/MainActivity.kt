@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -26,43 +27,91 @@ import java.util.concurrent.Executors
 
 
 class MainActivity : AppCompatActivity() {
+    // viewFinder value to hold the camera preview
     private val viewFinder: PreviewView by lazy { findViewById(R.id.viewFinder) }
+
+    private val openImage: ImageButton by lazy { findViewById(R.id.openImage) }
+    // captureBtn value to hold camera capture button
     private val captureBtn: ImageButton by lazy { findViewById(R.id.capture_btn) }
+    // imagePreview value to hold captured image preview
     private val imagePreview: ImageView by lazy { findViewById(R.id.preview) }
 
+    // imageCapture to hold captured image data
     private var imageCapture: ImageCapture? = null
+    // outDir variable to hold file of saved image
     private lateinit var outDir: File
+    // cameraExecutor to execute camera capture event on seperate thread ** Not important **
     private lateinit var cameraExecutor: ExecutorService
+    // convert outDir file to Uri to hold image path in device storage
     private var currentImgFilePath: Uri? = null
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        imagePreview.clipToOutline = true
+    private val pickImage = 100
 
+    /**
+     * onCreate function
+     * it initiates the app process called activity
+     * in this activity we can access camera,
+     * and capture image
+     */
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState) // default
+        setContentView(R.layout.activity_main) // default
+        imagePreview.clipToOutline = true // not important
+
+        // Check for camera permissions on device if not granted asks for permission
         if (allPermissionsGranted()) {
+            // if granted permission start camera
             startCamera()
         } else {
+            // if not yet granted ask permission
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
-        cameraExecutor = Executors.newSingleThreadExecutor()
-        outDir = getOutputDirectory()
+        cameraExecutor = Executors.newSingleThreadExecutor() // not important
+        outDir = getOutputDirectory() // gets the current app folder
 
-        // Take photo on button click
+        // Take photo on button(captureBtn) click
         captureBtn.setOnClickListener {
-            takePhoto()
+            takePhoto() // takes photo and saves to app folder
         }
 
+        // Shows the preview image on clicking it
         imagePreview.setOnClickListener {
+            // Bellow process to show the image preview in PreviewActivity
             currentImgFilePath?.let { uri ->
-                Intent(this, PreviewActivity::class.java).run {
-                    this.data = uri
-                    startActivity(this)
-                }
+                gotoPreview(uri)
+            }
+        }
+
+        openImage.setOnClickListener {
+            val gallery = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI)
+            startActivityForResult(gallery, pickImage)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(requestCode == RESULT_OK && requestCode == pickImage) {
+            val imageUri = data?.data
+            if ( imageUri != null ) {
+                gotoPreview(imageUri)
+            } else {
+                Toast.makeText(baseContext, "Unable to open image", Toast.LENGTH_LONG).show()
             }
         }
     }
 
+    private fun gotoPreview(uri: Uri) {
+        Intent(this, PreviewActivity::class.java).run {
+            this.data = uri
+            startActivity(this)
+        }
+    }
+
+    /**
+     * takePhoto function
+     * this functions captures image
+     * and save it to outDir
+     */
     private fun takePhoto() {
         val imageCapture = imageCapture ?: return
 
@@ -99,6 +148,12 @@ class MainActivity : AppCompatActivity() {
                 })
     }
 
+    /**
+     * startCamera function
+     * this function start camera session
+     * camera preview is shown on screen once
+     * the camera is active
+     */
     private fun startCamera() {
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
@@ -141,6 +196,7 @@ class MainActivity : AppCompatActivity() {
         return if (dir != null && dir.exists()) dir else filesDir
     }
 
+    // asks for permission
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
@@ -164,6 +220,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // initial varibales to hold information about this activity
     companion object {
         private const val TAG = "Scanner"
         private const val FILENAME_FORMAT = "dd-MM-yyyy-HH-mm-ss-SSS"
