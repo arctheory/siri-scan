@@ -1,11 +1,12 @@
 package com.arcworks.cocoscan
 
+import android.animation.ObjectAnimator
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
-import android.widget.Button
-import android.widget.ImageView
+import android.view.View
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.mlkit.common.model.LocalModel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.label.ImageLabeling
@@ -19,6 +20,13 @@ class PreviewActivity : AppCompatActivity() {
     private val closeBtn: Button by lazy { findViewById(R.id.closeBtn) }
     // previewURI variable to hold the link(file location path) to show image
     private lateinit var previewURI: Uri
+
+    private val grainText: TextView by lazy { findViewById(R.id.grainFoundText) }
+    private val noGrainText: TextView by lazy { findViewById(R.id.noGrainText) }
+
+    private val confidenceView: ConstraintLayout by lazy { findViewById(R.id.confidenceView) }
+    private val confidenceProgress: ProgressBar by lazy { findViewById(R.id.confidenceProgress) }
+    private val confidenceValue: TextView by lazy { findViewById(R.id.confidenceValue) }
 
     // onCreate function to start the activity
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,11 +55,28 @@ class PreviewActivity : AppCompatActivity() {
         val image: InputImage = InputImage.fromFilePath(this, previewURI)
 
         labeler.process(image)
-            .addOnSuccessListener { labels ->
-                Log.e("LABELS:", labels.toString())
+            .addOnSuccessListener { (imageLabel) ->
+                when(imageLabel.text) {
+                    "Grain" -> {
+                        grainText.visibility = View.VISIBLE
+                    }
+                    "no_Grain" -> {
+                        noGrainText.visibility = View.VISIBLE
+                    }
+                    else -> {}
+                }
+                ObjectAnimator.ofInt(
+                    confidenceProgress, "progress", 0,
+                    (imageLabel.confidence * 100).toInt()
+                ).apply {
+                    this.duration = 1000
+                }.start()
+
+                val value = "${(imageLabel.confidence * 100).toInt()}%"
+                confidenceValue.text = value
             }
-            .addOnFailureListener { e ->
-                e.printStackTrace()
+            .addOnFailureListener { _ ->
+                Toast.makeText(baseContext, "Unable to process image", Toast.LENGTH_LONG).show()
             }
     }
 }

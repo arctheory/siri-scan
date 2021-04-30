@@ -90,7 +90,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if(requestCode == RESULT_OK && requestCode == pickImage) {
+        if(resultCode == RESULT_OK && requestCode == pickImage) {
             val imageUri = data?.data
             if ( imageUri != null ) {
                 gotoPreview(imageUri)

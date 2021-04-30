@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">SiriScan</string>
     <string name="preview_close">Close</string>
+    <string name="grain_found">Grain Found in the pebrine</string>
+    <string name="no_grain_found">No grain found in the pebrine</string>
+    <string name="initial_confidence">0%</string>
+    <string name="result_confidence">Result Confidence</string>
 </resources>
