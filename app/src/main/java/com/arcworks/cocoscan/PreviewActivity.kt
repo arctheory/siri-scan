@@ -1,6 +1,8 @@
 package com.arcworks.cocoscan
 
 import android.animation.ObjectAnimator
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -58,6 +60,7 @@ class PreviewActivity : AppCompatActivity() {
             .addOnSuccessListener { (imageLabel) ->
                 when(imageLabel.text) {
                     "Grain" -> {
+                        confidenceView.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#E60808"))
                         grainText.visibility = View.VISIBLE
                     }
                     "no_Grain" -> {
@@ -75,7 +78,7 @@ class PreviewActivity : AppCompatActivity() {
                 val value = "${(imageLabel.confidence * 100).toInt()}%"
                 confidenceValue.text = value
             }
-            .addOnFailureListener { _ ->
+            .addOnFailureListener {
                 Toast.makeText(baseContext, "Unable to process image", Toast.LENGTH_LONG).show()
             }
     }
